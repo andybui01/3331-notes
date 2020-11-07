@@ -92,3 +92,18 @@ if dupACK == 3: # fast retransmit
 if timeout:
     ssthresh = cwnd / 2
     cwnd = 1
+```
+
+### TCP flavors
+**Tahoe:**
+- `cwnd = 1` for each **triple dup-ack** _and_ **timeout**
+
+**Reno:**
+- `cwnd = 1` on timeout
+- `cwnd = cwnd/2` on triple dup-ack
+
+**newReno:**
+- Reno + improved fast recovery (SKIPPED)
+
+**SACK: (NOT COVERED)**
+- incorporates selective acks

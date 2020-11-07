@@ -12,6 +12,7 @@ socket = new socket
 set timeout on socket to 600ms
 
 for i=1 to 15:
+
     try:
         startTime = get time
 
