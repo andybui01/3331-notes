@@ -1,3 +1,45 @@
+### Maximum Segment Size (MSS)
+IP packet:
+- Smaller than **Maximum Transmission Unit (MTU)**, e.g. 1500 bytes on Ethernet
+**Header**
+- min 20 bytes
+**Payload**
+- TCP payload:
+    - **Header**
+        - Minimum 20 byte header
+    - **payload (TCP segment)**
+        - no more than Maximum Segment Size (MSS) bytes
+
+**MSS:** `MTU - IP_HEADER - TCP_HEADER`
+
+### Sequence and ACK numbers
+```
+seq = 1st byte in current segment = ISN + k (NOT INCLUDING HEADER)
+
+ACK = next expected byte of payload = seq + len(payload)
+```
+
+### TCP timeouts
+
+```
+timeout(t) = eRTT(t) + 4 * dRTT(t)
+eRTT(t) = (1-a) * eRTT(t-1) + a * sRTT(t)
+dRTT(t) = (1-b) * dRTT(t-1) + b * |sRTT(t) - eRTT(t-1)|
+
+choose a = 0.125, b = 0.25
+```
+
+### TCP ACK generation
+|Event at receiver|TCP receiver action|
+|---|---|
+|arrival of in-order segment with expected seq. **All data up to expected seq already ACK'd**|delayed ACK. Wait up to 500ms for next segment, then ACK.|
+|arrival of in-order segment with expected seq. **One other segment has ACK pending.**|immediately send single cumulative ACK, ACK'ing both segments|
+|arrival of out-of-order segment with a higher than expected seq, **gap detected**|immediately send duplicate ACK indicate seq of next expected byte|
+|**arrival of segment that partially or completely fills gap**|immediately send ACK, provided that segment starts at lower end of gap|
+
+### TCP fast retransmit
+if sender receives triple dup-ACKs for same data, resend unack'd segment with smallest seq. It is likely that the unacked segment is lost after a triple dup-ack, so don't wait for timeout.
+
 ### cost of congestion
 **knee**: point after which _throughput increases slowly_ while _delays increase fast_.
 
@@ -73,15 +115,23 @@ Summary: Sender increases transmission rate (window size), probing for usable ba
 ### Implementation
 **ACK (new data):**
 ```python
+cwnd = 1*MSS
 if cwnd < ssthresh:
-    cwnd += 1 # slow start
+    cwnd += 2*cwnd # slow start
 else:
-    cwnd += 1/cwnd # Additive increase (congestion avoidance phase)
+    cwnd += 1*MSS # Additive increase (congestion avoidance phase)
 ```
 
 **duplicate ACK:**
 ```python
 dupACK++
+
+# tahoe
+if dupACK == 3: # fast retransmit
+    ssthresh = cwnd / 2
+    cwnd = 1
+
+# reno
 if dupACK == 3: # fast retransmit
     ssthresh = cwnd / 2
     cwnd = cwnd / 2
@@ -89,6 +139,13 @@ if dupACK == 3: # fast retransmit
 
 **timeout:**
 ```python
+
+# tahoe
+if timeout:
+    ssthresh = cwnd / 2
+    cwnd = 1
+
+# reno (same!)
 if timeout:
     ssthresh = cwnd / 2
     cwnd = 1

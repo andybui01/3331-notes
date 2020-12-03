@@ -199,3 +199,30 @@ Allows NAT'd host to:
 - NAT'd client establishes connection to relay
 - external client connects to relay
 - relay bridges packets between two connections
+
+
+### IPv6
+**Motivations:**
+- 32-bit address space soon to be completely allocated
+- header format helps speed processing/forwarding
+- header changes to facilitate QoS
+
+**IPv6 datagram format:**
+- fixed-length 40 byte header
+- no fragmentation allowed
+
+`priority`: identify priority among datagrams in flow (traffic class)
+`flow label`: identify datagrams in same "flow"
+`next header`: identify upper layer protocol for data
+
+
+**Other changes from IPv4**
+`checksum`: removed entirely to reduce processing time at each hop
+`options`: allowed, but outside of header, indicated by "Next Header" field
+`ICMPv6`: new version of ICMP with new message types (e.g. packet too big), and multicast group management functions
+
+**Transition from IPv4 to IPv6...how?**
+Not all routers can be upgraded simultaneously, so networks have to operate with mixed IPv4 and IPv6 routers. But how???
+
+**The answer: *tunneling***
+IPv6 datagrams are carried as the _payload_ of a IPv4 datagram.
